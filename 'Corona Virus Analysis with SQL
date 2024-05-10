@@ -1,0 +1,152 @@
+USE [project]
+GO
+
+SELECT *
+  FROM [dbo].[taska]
+
+GO
+#Q1
+SELECT 
+    SUM(CASE WHEN Province IS NULL THEN 1 ELSE 0 END) AS Province,
+    SUM(CASE WHEN Country_Region IS NULL THEN 1 ELSE 0 END) AS Country_Region,
+    SUM(CASE WHEN Latitude IS NULL THEN 1 ELSE 0 END) AS Latitude,
+	SUM(CASE WHEN Longitude IS NULL THEN 1 ELSE 0 END) AS Longitude,
+	SUM(CASE WHEN Confirmed IS NULL THEN 1 ELSE 0 END) AS Confirmed,
+	SUM(CASE WHEN Deaths IS NULL THEN 1 ELSE 0 END) AS Deaths,
+	SUM(CASE WHEN Recovered IS NULL THEN 1 ELSE 0 END) AS Recovered
+FROM [dbo].[taska];
+
+
+
+#Q2
+UPDATE [dbo].[taska] 
+SET 
+    Latitude = ISNULL(Latitude, 0),
+    Longitude = ISNULL(Longitude, 0)
+    
+WHERE 
+    Latitude IS NULL
+    OR Longitude IS NULL;
+  
+#Q3
+SELECT 
+    COUNT(*) AS total_rows,
+    COUNT(Province) AS Province,
+    COUNT(Country_Region) AS Country_Region,
+    COUNT(Latitude) AS Latitude,
+	COUNT(Longitude) AS Longitude,
+	COUNT(Confirmed) AS Confirmed,
+	COUNT(Deaths) AS Deaths,
+	COUNT(Recovered) AS Recovered
+FROM [dbo].[taska];
+
+#Q4
+SELECT MIN(Dates) AS start_date, MAX(Dates) AS end_date FROM [dbo].[taska];
+
+#Q5
+SELECT COUNT(DISTINCT MONTH(Dates)) AS num_months FROM [dbo].[taska];
+
+#Q6
+SELECT MONTH(Dates) AS month, AVG(Confirmed) AS avg_confirmed, AVG(Deaths) AS avg_deaths, AVG(Recovered) AS avg_recovered
+FROM [dbo].[taska]
+GROUP BY MONTH(Dates);
+#Q7
+WITH RankedData AS (
+    SELECT 
+        MONTH(Dates) AS month,
+        Confirmed,
+        Deaths,
+        Recovered,
+        ROW_NUMBER() OVER (PARTITION BY MONTH(Dates) ORDER BY COUNT(Confirmed) DESC) AS ConfirmedRank,
+        ROW_NUMBER() OVER (PARTITION BY MONTH(Dates) ORDER BY COUNT(Deaths) DESC) AS DeathsRank,
+        ROW_NUMBER() OVER (PARTITION BY MONTH(Dates) ORDER BY COUNT(Recovered) DESC) AS RecoveredRank
+    FROM [dbo].[taska]
+    GROUP BY MONTH(Dates), Confirmed, Deaths, Recovered
+)
+SELECT 
+    month,
+    MAX(CASE WHEN ConfirmedRank = 1 THEN Confirmed END) AS most_freq_confirmed,
+    MAX(CASE WHEN DeathsRank = 1 THEN Deaths END) AS most_freq_deaths,
+    MAX(CASE WHEN RecoveredRank = 1 THEN Recovered END) AS most_freq_recovered
+FROM RankedData
+GROUP BY month;
+
+#Q8
+SELECT YEAR(Dates) AS year, MIN(Confirmed) AS min_confirmed, MIN(Deaths) AS min_deaths, MIN(Recovered) AS min_recovered
+FROM [dbo].[taska]
+GROUP BY YEAR(Dates);
+
+#Q9
+SELECT YEAR(Dates) AS year, MAX(Confirmed) AS max_confirmed, MAX(Deaths) AS max_deaths, MAX(Recovered) AS max_recovered
+FROM [dbo].[taska]
+GROUP BY YEAR(Dates);
+
+#Q10
+SELECT MONTH(Dates) AS month, SUM(Confirmed) AS total_confirmed, SUM(Deaths) AS total_deaths, SUM(Recovered) AS total_recovered
+FROM [dbo].[taska]
+GROUP BY MONTH(Dates);
+
+#Q11
+
+SELECT 
+    SUM(Confirmed) AS total_confirmed_cases,
+    AVG(Confirmed) AS average_confirmed_cases,
+    VAR(CONVERT(FLOAT, Confirmed)) AS variance_confirmed_cases,
+    STDEV(CONVERT(FLOAT, Confirmed)) AS stdev_confirmed_cases
+FROM [dbo].[taska];
+
+#Q12
+SELECT 
+    MONTH(Dates) AS month,
+    SUM(Confirmed) AS total_confirmed_cases,
+    AVG(Confirmed) AS average_confirmed_cases,
+    VAR(CONVERT(FLOAT, Confirmed)) AS variance_confirmed_cases,
+    STDEV(CONVERT(FLOAT, Confirmed)) AS stdev_confirmed_cases,
+    SUM(Deaths) AS total_death_cases,
+    AVG(Deaths) AS average_death_cases,
+    VAR(CONVERT(FLOAT, Deaths)) AS variance_death_cases,
+    STDEV(CONVERT(FLOAT, Deaths)) AS stdev_death_cases
+FROM [dbo].[taska]
+GROUP BY MONTH(Dates);
+
+#Q13
+SELECT 
+    SUM(Confirmed) AS total_confirmed_cases,
+    AVG(Confirmed) AS average_confirmed_cases,
+    VAR(CONVERT(FLOAT, Confirmed)) AS variance_confirmed_cases,
+    STDEV(CONVERT(FLOAT, Confirmed)) AS stdev_confirmed_cases,
+    SUM(Recovered) AS total_recovered_cases,
+    AVG(Recovered) AS average_recovered_cases,
+    VAR(CONVERT(FLOAT, Recovered)) AS variance_recovered_cases,
+    STDEV(CONVERT(FLOAT, Recovered)) AS stdev_recovered_cases
+FROM [dbo].[taska];
+
+#Q14
+SELECT TOP 1
+    Country_Region AS country_with_highest_confirmed_cases,
+    MAX(Confirmed) AS highest_confirmed_cases
+FROM [dbo].[taska]
+GROUP BY Country_Region
+ORDER BY highest_confirmed_cases DESC;
+
+#Q15
+SELECT TOP 1
+    Country_Region AS country_with_lowest_death_cases,
+    MIN(Deaths) AS lowest_death_cases
+FROM [dbo].[taska]
+GROUP BY Country_Region
+ORDER BY lowest_death_cases ASC;
+
+#Q16
+SELECT TOP 5
+    Country_Region AS country,
+    SUM(Recovered) AS total_recovered_cases
+FROM [dbo].[taska]
+GROUP BY Country_Region
+ORDER BY total_recovered_cases DESC;
+
+
+
+
+
+
